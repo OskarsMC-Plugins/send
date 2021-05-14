@@ -1,0 +1,21 @@
+# send
+[plugin]
+    enabled=true
+
+[servers]
+    server-blacklist=false
+    servers-blacklisted = ["server-1", "server-2"]
+
+[messages]
+    # General
+    no-permission="<red>You do not have permission to do that</red>"
+    # /send
+    send-usage="<red>/send \\<type> \\<player|server|*> \\<server></red>"
+    send-success-plural="<yellow>Sent <players> players to <server>.</yellow>"
+    send-success-singular="<yellow>Sent <player> to <server>.</yellow>"
+    send-no-player="<yellow>The thing you are tring to send does not exist.</yellow>"
+    send-no-server="<yellow>That server does not exist.</yellow>"
+
+
+[developer-info]
+    config-version=0.1

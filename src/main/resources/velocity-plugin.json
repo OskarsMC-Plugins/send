@@ -1,0 +1,10 @@
+{
+  "id": "send",
+  "name": "send",
+  "version": "${project.version}",
+  "description": "Plugin to send players to servers on Velocity! (Previously VelocitySend)",
+  "url": "https://software.oskarsmc.com/",
+  "authors": ["OskarsMC", "OskarZyg"],
+  "dependencies": [],
+  "main": "com.oskarsmc.send.Send"
+}
