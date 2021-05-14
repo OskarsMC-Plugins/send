@@ -1,13 +1,33 @@
-# VelocitySend
-Plugin to send players to servers on Velocity!
+# send
+Plugin to send players to servers on Velocity.
 
 ## Commands
 
 ### Send:
-Permission: `sendvelocity.send` 
+Permission: `osmc.send.send` 
 
-    /send <target|player> <server>
+    /send <type> <player|server|*> <server>
 #### Arguments:
-`<target|player>`: Name of a person that is currently online on the server or `*`, which due to mojang's brigadier, has to be inputted like `"*"`.
+<table>
+    <thead>
+        <tr>
+            <th>Base Command</th>
+            <th>Type</th>
+            <th>Player | Server | *</th>
+            <th>Server</th>
+            <th>Permission</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>/send</code></td>
+            <td><code>player</code> or <code>server</code></td>
+            <td>Any Name of a server, player, or a <code>"*"</code></td>
+            <td>Any Name of a target server on velocity</td>
+            <td><code>osmc.send.send</code></td>
+        </tr>
+    </tbody>
+</table>
 
-`<server>`: Name of any server on velocity.
+# Download
+Get the latest release <a href="https://github.com/OskarsMC-Plugins/send/releases">here</a>
