@@ -1,26 +1,32 @@
 # This workflow will build a Java project with Maven
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
 
-name: Java CI with Maven
+name: Java CI
 
 on:
   push:
-    branches: [ main ]
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 11, 16 ]
+      fail-fast: true
 
     steps:
       # Build the things
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
         with:
-          java-version: 11
-      - run: mvn -B package --file pom.xml # Build
-      - run: mkdir staging && cp target/*.jar staging # Move files
+          java-version: ${{ matrix.java }}
+      - run: mvn clean package # Build
+      - run: mkdir -p staging/java-${{ matrix.java }}
+      - run: cp target/*.jar staging/java-${{ matrix.java }} # Move files
+      - run: rm -r staging/java-${{ matrix.java }}/original-*.jar # Delete unshaded files
       - uses: actions/upload-artifact@v2 # Upload
         with:
-          name: SendVelocity
+          name: ${{ github.event.repository.name }}
           path: staging/*
           retention-days: 10 # Delete artifacts after 10 days
