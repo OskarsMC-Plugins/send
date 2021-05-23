@@ -197,15 +197,10 @@ public class SendCommand {
         if (source.hasPermission("osmc.send.send")) {
             if (source instanceof Player) {
                 if (sendSettings.getServerBlackListEnabled() && ((Player) source).getCurrentServer().isPresent()) {
-                    if (sendSettings.getServersBlackListed().contains(((Player) source).getCurrentServer().get().getServerInfo().getName())) {
-                        return false;
-                    } else {
-                        return true;
-                    }
+                    return !sendSettings.getServersBlackListed().contains(((Player) source).getCurrentServer().get().getServerInfo().getName());
                 }
-            } else {
-                return true;
             }
+            return true;
         }
         return false;
     }
