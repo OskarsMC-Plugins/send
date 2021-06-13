@@ -29,14 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SendCommand {
-    public ConcurrentMap<String, AtomicInteger> sendType;
     public AtomicInteger playersSent;
 
     public String sendPerm = "osmc.send.send";
 
     public SendCommand(ProxyServer proxyServer, SendSettings sendSettings, Metrics metrics) {
-
-        this.sendType = new ConcurrentHashMap<String, AtomicInteger>();
         this.playersSent = new AtomicInteger(0);
 
         LiteralCommandNode<CommandSource> sendCommand = LiteralArgumentBuilder
@@ -77,7 +74,7 @@ public class SendCommand {
                             } else if (sendable.type() == Sendable.Type.PLAYER) {
                                 context.getSource().sendMessage(MiniMessage.get().parse(sendSettings.getMessageRaw("send-success-singular"), Map.of("player", sendable.players().get(0).getUsername(), "server", server)));
                             } else if (sendable.type() == Sendable.Type.PLAYERS || sendable.type() == Sendable.Type.SERVER) {
-                                context.getSource().sendMessage(MiniMessage.get().parse(sendSettings.getMessageRaw("send-success-plural"), Map.of("players", "" + sendable.players().size(), "server", server.replace("s:", ""))));
+                                context.getSource().sendMessage(MiniMessage.get().parse(sendSettings.getMessageRaw("send-success-plural"), Map.of("players", "" + sendable.players().size(), "server", server)));
                             }
 
                             incrementStats(sendable.type(), sendable.players().size());
@@ -154,19 +151,6 @@ public class SendCommand {
     }
 
     public void metrics(Metrics metrics) {
-        metrics.addCustomChart(new AdvancedPie("send_type", new Callable<Map<String, Integer>>() {
-            @Override
-            public Map<String, Integer> call() {
-                Map<String, AtomicInteger> temp = sendType;
-                Map<String, Integer> ret = new ConcurrentHashMap<>();
-                temp.forEach((key, value) -> {
-                    ret.put(key, value.get());
-                });
-                sendType.clear();
-                return ret;
-            }
-        }));
-
         metrics.addCustomChart(new SingleLineChart("players_sent", new Callable<Integer>() {
             @Override
             public Integer call() {
@@ -178,17 +162,6 @@ public class SendCommand {
     }
 
     public void incrementStats(Sendable.Type type, int players) {
-        // Type Pie
-        AtomicBoolean exists = new AtomicBoolean(false);
-        this.sendType.forEach((key, value) -> {
-            if (type.name().toLowerCase(Locale.ROOT) ==  key) {
-                value.addAndGet(players);
-                exists.set(true);
-            }
-        });
-        if (!exists.get()) {
-            this.sendType.put(type.name().toLowerCase(Locale.ROOT), new AtomicInteger(players));
-        }
         // Player Chart
         this.playersSent.incrementAndGet();
     }
