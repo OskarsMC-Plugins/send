@@ -1,10 +1,19 @@
 package com.oskarsmc.send.command;
 
+import cloud.commandframework.ArgumentDescription;
+import cloud.commandframework.Command;
+import cloud.commandframework.context.CommandContext;
+import cloud.commandframework.keys.CloudKey;
+import cloud.commandframework.permission.CommandPermission;
+import cloud.commandframework.permission.PredicatePermission;
+import cloud.commandframework.velocity.arguments.PlayerArgument;
+import cloud.commandframework.velocity.arguments.ServerArgument;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.oskarsmc.send.Send;
 import com.oskarsmc.send.configuration.SendSettings;
 import com.oskarsmc.send.sendable.Sendable;
 import com.oskarsmc.send.util.InputUtils;
@@ -19,9 +28,7 @@ import org.bstats.charts.AdvancedPie;
 import org.bstats.charts.SingleLineChart;
 import org.bstats.velocity.Metrics;
 
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -30,124 +37,60 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SendCommand {
     public AtomicInteger playersSent;
+    private Send plugin;
 
-    public String sendPerm = "osmc.send.send";
-
-    public SendCommand(ProxyServer proxyServer, SendSettings sendSettings, Metrics metrics) {
+    public SendCommand(Send plugin, ProxyServer proxyServer) {
+        this.plugin = plugin;
         this.playersSent = new AtomicInteger(0);
 
-        LiteralCommandNode<CommandSource> sendCommand = LiteralArgumentBuilder
-                .<CommandSource>literal("send")
-                .executes(context -> {
-                    if (context.getSource().hasPermission(sendPerm)) {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("send-usage"));
-                    } else {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("no-permission"));
-                    }
-                    return 1;
+        Command.Builder<CommandSource> builder = plugin.commandManager.commandBuilder("send"); // TODO: Implement permissions
+
+        plugin.commandManager.command(builder.literal("player", ArgumentDescription.of("Send a player to a server."))
+                .argument(PlayerArgument.of("player-name"), ArgumentDescription.of("The name of the player to send."))
+                .argument(ServerArgument.of("server"), ArgumentDescription.of("The server to send the player to."))
+                .handler(context -> {
+                    Player player = context.get("player-name");
+                    RegisteredServer registeredServer = context.get("server");
+
+
+                    Sendable sendable = new Sendable(Sendable.Type.PLAYER, new ArrayList<Player>(List.of(player)));
+                    this.sendMessage(sendable, context);
+                    this.incrementStats(sendable.type(), sendable.players().size());
+                    sendable.send(registeredServer);
                 })
-                .build();
+        );
 
-        ArgumentCommandNode<CommandSource, String> serverNode = RequiredArgumentBuilder
-                .<CommandSource, String>argument("server", StringArgumentType.string())
-                .suggests((context, builder) -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        for (RegisteredServer server : proxyServer.getAllServers()) {
-                            builder.suggest(server.getServerInfo().getName());
-                        }
-                    }
-                    return builder.buildFuture();
+        plugin.commandManager.command(builder.literal("server", ArgumentDescription.of("Send all the players on a server to a server."))
+                .argument(ServerArgument.of("server-name"), ArgumentDescription.of("The name of a server that contains the players to send."))
+                .argument(ServerArgument.of("server"), ArgumentDescription.of("The server to send the players to."))
+                .handler(context -> {
+                    RegisteredServer registeredServerWithPlayers = context.get("server-name");
+                    RegisteredServer registeredServer = context.get("server");
+
+                    Sendable sendable = new Sendable(Sendable.Type.SERVER, new ArrayList<Player>(registeredServerWithPlayers.getPlayersConnected()));
+                    this.sendMessage(sendable, context);
+                    this.incrementStats(sendable.type(), sendable.players().size());
+                    sendable.send(registeredServer);
                 })
-                .executes(context -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        String target = context.getArgument("target", String.class);
-                        String server = context.getArgument("server", String.class);
+        );
 
-                        Optional<RegisteredServer> serverOptional = proxyServer.getServer(server);
+        /*
+        plugin.commandManager.command(builder.literal("group", ArgumentDescription.of("Send a group of players to a server."))
+                .argument()
+        );
+         */
 
-                        if (serverOptional.isPresent()) {
-                            Sendable sendable = InputUtils.getPlayersToSend(context, proxyServer);
+        metrics(plugin.metrics);
+    }
 
-                            if (sendable.type() == Sendable.Type.UNKNOWN) {
-                                context.getSource().sendMessage(sendSettings.getMessageParsed("send-no-player"));
-                                return 0;
-                            } else if (sendable.type() == Sendable.Type.PLAYER) {
-                                context.getSource().sendMessage(MiniMessage.get().parse(sendSettings.getMessageRaw("send-success-singular"), Map.of("player", sendable.players().get(0).getUsername(), "server", server)));
-                            } else if (sendable.type() == Sendable.Type.PLAYERS || sendable.type() == Sendable.Type.SERVER) {
-                                context.getSource().sendMessage(MiniMessage.get().parse(sendSettings.getMessageRaw("send-success-plural"), Map.of("players", "" + sendable.players().size(), "server", server)));
-                            }
-
-                            incrementStats(sendable.type(), sendable.players().size());
-
-                            sendable.send(serverOptional.get());
-                        } else {
-                            context.getSource().sendMessage(sendSettings.getMessageParsed("send-no-server"));
-                        }
-                    } else {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("no-permission"));
-                    }
-                    return 0;
-                }).build();
-
-        ArgumentCommandNode<CommandSource, String> typeSelectionNode = RequiredArgumentBuilder
-                .<CommandSource, String>argument("type", StringArgumentType.word())
-                .suggests((context, builder) -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        builder.suggest("server");
-                        builder.suggest("player");
-                    }
-                    return builder.buildFuture();
-                })
-                .executes(context -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("send-usage"));
-                    } else {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("no-permission"));
-                    }
-                    return 0;
-                })
-                .build();
-
-        ArgumentCommandNode<CommandSource, String> playerSelectionNode = RequiredArgumentBuilder
-                .<CommandSource, String>argument("target", StringArgumentType.string())
-                .suggests((context, builder) -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        if (context.getArgument("type", String.class).equals("server")) {
-                            for (RegisteredServer server : proxyServer.getAllServers()) {
-                                builder.suggest(server.getServerInfo().getName());
-                            }
-                        } else if (context.getArgument("type", String.class).equals("player")) {
-                            for (Player player : proxyServer.getAllPlayers()) {
-                                builder.suggest(player.getUsername());
-                            }
-                            builder.suggest("\"*\"");
-                        }
-                    }
-                    return builder.buildFuture();
-                })
-                .executes(context -> {
-                    if (checkPerm(context.getSource(), sendSettings)) {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("send-usage"));
-                    } else {
-                        context.getSource().sendMessage(sendSettings.getMessageParsed("no-permission"));
-                    }
-                    return 0;
-                })
-                .build();
-
-        playerSelectionNode.addChild(serverNode);
-        typeSelectionNode.addChild(playerSelectionNode);
-        sendCommand.addChild(typeSelectionNode);
-
-        BrigadierCommand sendBrigadier = new BrigadierCommand(sendCommand);
-
-
-        CommandMeta meta = proxyServer.getCommandManager().metaBuilder(sendBrigadier)
-                .build();
-
-        proxyServer.getCommandManager().register(meta, sendBrigadier);
-
-        metrics(metrics);
+    public void sendMessage(Sendable sendable, CommandContext<CommandSource> context) {
+        if (sendable.type() == Sendable.Type.UNKNOWN) {
+            context.getSender().sendMessage(plugin.sendSettings.getMessageParsed("send-no-player"));
+        } else if (sendable.type() == Sendable.Type.PLAYER) {
+            context.getSender().sendMessage(MiniMessage.get().parse(plugin.sendSettings.getMessageRaw("send-success-singular"), Map.of("player", sendable.players().get(0).getUsername(), "server", ((RegisteredServer) context.get("server")).getServerInfo().getName())));
+        } else if (sendable.type() == Sendable.Type.PLAYERS || sendable.type() == Sendable.Type.SERVER) {
+            context.getSender().sendMessage(MiniMessage.get().parse(plugin.sendSettings.getMessageRaw("send-success-plural"), Map.of("players", "" + sendable.players().size(), "server", ((RegisteredServer) context.get("server")).getServerInfo().getName())));
+        }
     }
 
     public void metrics(Metrics metrics) {
@@ -163,7 +106,7 @@ public class SendCommand {
 
     public void incrementStats(Sendable.Type type, int players) {
         // Player Chart
-        this.playersSent.incrementAndGet();
+        this.playersSent.addAndGet(players);
     }
 
     public boolean checkPerm(CommandSource source, SendSettings sendSettings) {
