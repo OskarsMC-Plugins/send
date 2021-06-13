@@ -6,7 +6,7 @@
 
     <groupId>com.oskarsmc</groupId>
     <artifactId>send</artifactId>
-    <version>1.0.1</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <name>send</name>
@@ -199,6 +199,12 @@
             <groupId>org.bstats</groupId>
             <artifactId>bstats-velocity</artifactId>
             <version>2.2.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>cloud.commandframework</groupId>
+            <artifactId>cloud-velocity</artifactId>
+            <version>1.4.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
