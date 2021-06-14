@@ -43,7 +43,9 @@ public class SendCommand {
         this.plugin = plugin;
         this.playersSent = new AtomicInteger(0);
 
-        Command.Builder<CommandSource> builder = plugin.commandManager.commandBuilder("send"); // TODO: Implement permissions
+        Command.Builder<CommandSource> builder = plugin.commandManager.commandBuilder("send");
+
+        builder = builder.permission(new SendPermission(plugin.sendSettings));
 
         plugin.commandManager.command(builder.literal("player", ArgumentDescription.of("Send a player to a server."))
                 .argument(PlayerArgument.of("player-name"), ArgumentDescription.of("The name of the player to send."))
@@ -107,17 +109,5 @@ public class SendCommand {
     public void incrementStats(Sendable.Type type, int players) {
         // Player Chart
         this.playersSent.addAndGet(players);
-    }
-
-    public boolean checkPerm(CommandSource source, SendSettings sendSettings) {
-        if (source.hasPermission("osmc.send.send")) {
-            if (source instanceof Player) {
-                if (sendSettings.getServerBlackListEnabled() && ((Player) source).getCurrentServer().isPresent()) {
-                    return !sendSettings.getServersBlackListed().contains(((Player) source).getCurrentServer().get().getServerInfo().getName());
-                }
-            }
-            return true;
-        }
-        return false;
     }
 }
