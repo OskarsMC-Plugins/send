@@ -2,37 +2,30 @@ package com.oskarsmc.send.command;
 
 import cloud.commandframework.ArgumentDescription;
 import cloud.commandframework.Command;
+import cloud.commandframework.arguments.CommandArgument;
+import cloud.commandframework.arguments.parser.ArgumentParseResult;
+import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.context.CommandContext;
-import cloud.commandframework.keys.CloudKey;
-import cloud.commandframework.permission.CommandPermission;
-import cloud.commandframework.permission.PredicatePermission;
 import cloud.commandframework.velocity.arguments.PlayerArgument;
 import cloud.commandframework.velocity.arguments.ServerArgument;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import com.mojang.brigadier.tree.ArgumentCommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.oskarsmc.send.Send;
-import com.oskarsmc.send.configuration.SendSettings;
 import com.oskarsmc.send.sendable.Sendable;
-import com.oskarsmc.send.util.InputUtils;
-import com.velocitypowered.api.command.BrigadierCommand;
-import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bstats.charts.AdvancedPie;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.group.Group;
 import org.bstats.charts.SingleLineChart;
 import org.bstats.velocity.Metrics;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SendCommand {
@@ -76,11 +69,67 @@ public class SendCommand {
                 })
         );
 
-        /*
-        plugin.commandManager.command(builder.literal("group", ArgumentDescription.of("Send a group of players to a server."))
-                .argument()
+        plugin.commandManager.command(builder.literal("all", ArgumentDescription.of("Send all the players on a server to a server."))
+                .argument(ServerArgument.of("server"), ArgumentDescription.of("The server to send the players to."))
+                .handler(context -> {
+                    RegisteredServer registeredServer = context.get("server");
+
+                    Sendable sendable = new Sendable(Sendable.Type.PLAYERS, new ArrayList<Player>(proxyServer.getAllPlayers()));
+                    this.sendMessage(sendable, context);
+                    this.incrementStats(sendable.type(), sendable.players().size());
+                    sendable.send(registeredServer);
+                })
         );
-         */
+
+        if (proxyServer.getPluginManager().getPlugin("luckperms").isPresent()) {
+            CommandArgument.Builder<CommandSource, String> groupBuilder = StringArgument.<CommandSource>newBuilder("group-name")
+                    .withSuggestionsProvider((commandContext, source) -> {
+                        LuckPerms luckPerms = LuckPermsProvider.get();
+                        final ArrayList<String> suggestions = new ArrayList<String>();
+                        luckPerms.getGroupManager().getLoadedGroups().forEach(group -> suggestions.add(group.getName()));
+
+                        return suggestions;
+                    })
+                    .withParser((commandContext, inputQueue) -> {
+                        String input = inputQueue.peek();
+
+                        LuckPerms luckPerms = LuckPermsProvider.get();
+
+                        if (input == null) { // I dont think this is necessary but theres probably some edge case.
+                            return ArgumentParseResult.failure(new IllegalArgumentException("The group you provided is null."));
+                        }
+
+                        Group group = luckPerms.getGroupManager().getGroup(input);
+
+                        if (group != null) {
+                            return ArgumentParseResult.success(group.getName());
+                        }
+
+                        return ArgumentParseResult.failure(new IllegalArgumentException(input + " is not a loaded group."));
+                    });
+
+            plugin.commandManager.command(builder.literal("group", ArgumentDescription.of("Send a group of players to a server."))
+                    .argument(groupBuilder.build(), ArgumentDescription.of("The name of the group that contains the players to send."))
+                    .argument(ServerArgument.of("server"), ArgumentDescription.of("The server to send the players in the group to."))
+                    .handler(context -> {
+                        String group = context.get("group-name");
+                        RegisteredServer registeredServer = context.get("server");
+                        LuckPerms luckPerms = LuckPermsProvider.get();
+
+                        Sendable sendable;
+
+                        luckPerms.getGroupManager().getGroup(group);
+
+                        sendable = new Sendable(Sendable.Type.PLAYERS, new ArrayList<>());
+
+                        this.sendMessage(sendable, context);
+                        this.incrementStats(sendable.type(), sendable.players().size());
+                        sendable.send(registeredServer);
+                    })
+            );
+        } else {
+            plugin.logger.warn("LuckPerms was not found, group feature cannot be used.");
+        }
 
         metrics(plugin.metrics);
     }

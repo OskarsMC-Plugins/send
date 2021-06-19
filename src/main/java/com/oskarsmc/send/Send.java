@@ -24,7 +24,7 @@ import java.util.function.Function;
 public class Send {
 
     @Inject
-    private Logger logger;
+    public Logger logger;
 
     @Inject
     private ProxyServer proxyServer;
