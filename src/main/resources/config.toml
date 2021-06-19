@@ -8,11 +8,7 @@
 
 
 [messages]
-    # Where did my command syntax & help messages go?
-    # These are now made automatically by CLOUD.
-    
     # /send
-    send-usage="<red>/send \\<type> \\<player|server|*> \\<server></red>"
     send-success-plural="<yellow>Sent <players> players to <server>.</yellow>"
     send-success-singular="<yellow>Sent <player> to <server>.</yellow>"
 
