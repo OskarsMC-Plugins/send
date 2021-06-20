@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
+import com.oskarsmc.send.command.CloudSuggestionProcessor;
 import com.oskarsmc.send.command.SendCommand;
 import com.oskarsmc.send.configuration.SendSettings;
 import com.oskarsmc.send.util.StatUtils;
@@ -63,6 +64,11 @@ public class Send {
         this.metrics = metricsFactory.make(this, StatUtils.PLUGIN_ID);
 
         this.sendSettings = new SendSettings(this.dataDirectory.toFile(), logger);
-        this.sendCommand = new SendCommand(this, this.proxyServer);
+
+        commandManager.setCommandSuggestionProcessor(new CloudSuggestionProcessor());
+
+        if (this.sendSettings.isEnabled()) {
+            this.sendCommand = new SendCommand(this, this.proxyServer);
+        }
     }
 }
