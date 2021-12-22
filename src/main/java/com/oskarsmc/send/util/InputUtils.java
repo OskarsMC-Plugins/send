@@ -6,13 +6,16 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class InputUtils {
-    public static Sendable getPlayersToSend(CommandContext<CommandSource> input, ProxyServer proxyServer) {
+public final class InputUtils {
+    @Contract("_, _ -> new")
+    public static @NotNull Sendable getPlayersToSend(@NotNull CommandContext<CommandSource> input, ProxyServer proxyServer) {
         String type = input.getArgument("type", String.class);
         String target = input.getArgument("target", String.class);
 

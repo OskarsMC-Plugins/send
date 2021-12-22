@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-public class Send {
+public final class Send {
 
     @Inject
     public Logger logger;

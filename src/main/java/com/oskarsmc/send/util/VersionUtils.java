@@ -2,11 +2,12 @@ package com.oskarsmc.send.util;
 
 import com.moandjiezana.toml.Toml;
 import com.oskarsmc.send.configuration.SendSettings;
+import org.jetbrains.annotations.NotNull;
 
-public class VersionUtils {
+public final class VersionUtils {
     public static final double CONFIG_VERSION = getDefaultConfiguration().getDouble("developer-info.config-version");
 
-    public static boolean isLatestConfigVersion(SendSettings sendSettings) {
+    public static boolean isLatestConfigVersion(@NotNull SendSettings sendSettings) {
         if (sendSettings.getConfigVersion() == null) {
             return false;
         }

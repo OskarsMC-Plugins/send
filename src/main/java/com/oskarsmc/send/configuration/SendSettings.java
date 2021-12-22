@@ -4,6 +4,8 @@ import com.moandjiezana.toml.Toml;
 import com.oskarsmc.send.util.VersionUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -13,7 +15,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 
-public class SendSettings {
+public final class SendSettings {
     private final File dataFolder;
     private final File file;
 
@@ -62,7 +64,8 @@ public class SendSettings {
         }
     }
 
-    private File getConfigFile() {
+    @Contract(" -> new")
+    private @NotNull File getConfigFile() {
         return new File(dataFolder, "config.toml");
     }
 

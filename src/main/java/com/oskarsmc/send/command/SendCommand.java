@@ -20,6 +20,7 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.group.Group;
 import org.bstats.charts.SingleLineChart;
 import org.bstats.velocity.Metrics;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class SendCommand {
     public AtomicInteger playersSent;
     private Send plugin;
 
-    public SendCommand(Send plugin, ProxyServer proxyServer) {
+    public SendCommand(@NotNull Send plugin, @NotNull ProxyServer proxyServer) {
         this.plugin = plugin;
         this.playersSent = new AtomicInteger(0);
 
@@ -141,7 +142,7 @@ public class SendCommand {
         metrics(plugin.metrics);
     }
 
-    public void sendMessage(Sendable sendable, CommandContext<CommandSource> context) {
+    public void sendMessage(@NotNull Sendable sendable, CommandContext<CommandSource> context) {
         if (sendable.type() == Sendable.Type.UNKNOWN) {
             context.getSender().sendMessage(plugin.sendSettings.getMessageParsed("send-no-player"));
         } else if (sendable.type() == Sendable.Type.PLAYER) {
@@ -151,7 +152,7 @@ public class SendCommand {
         }
     }
 
-    public void metrics(Metrics metrics) {
+    public void metrics(@NotNull Metrics metrics) {
         metrics.addCustomChart(new SingleLineChart("players_sent", new Callable<Integer>() {
             @Override
             public Integer call() {

@@ -5,7 +5,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 
 import java.util.List;
 
-public class Sendable {
+public final class Sendable {
     private List<Player> players;
     private final Type sendableType;
 
