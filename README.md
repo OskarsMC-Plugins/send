@@ -8,7 +8,7 @@ Plugin to send players to servers on Velocity.
 ### Send:
 Permission: `osmc.send.send` 
 
-<img src="docs/send-commands.svg">
+<img src="docs/send.svg">
 
 # Download
 Get the latest release <a href="https://github.com/OskarsMC-Plugins/send/releases">here</a>
