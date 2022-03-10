@@ -15,6 +15,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.group.Group;
@@ -146,9 +147,21 @@ public class SendCommand {
         if (sendable.type() == Sendable.Type.UNKNOWN) {
             context.getSender().sendMessage(plugin.sendSettings.getMessageParsed("send-no-player"));
         } else if (sendable.type() == Sendable.Type.PLAYER) {
-            context.getSender().sendMessage(MiniMessage.get().parse(plugin.sendSettings.getMessageRaw("send-success-singular"), Map.of("player", sendable.players().get(0).getUsername(), "server", ((RegisteredServer) context.get("server")).getServerInfo().getName())));
+            context.getSender().sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                            plugin.sendSettings.getMessageRaw("send-success-singular"),
+                            Placeholder.parsed("player", sendable.players().get(0).getUsername()),
+                            Placeholder.parsed("server", ((RegisteredServer) context.get("server")).getServerInfo().getName())
+                    )
+            );
         } else if (sendable.type() == Sendable.Type.PLAYERS || sendable.type() == Sendable.Type.SERVER) {
-            context.getSender().sendMessage(MiniMessage.get().parse(plugin.sendSettings.getMessageRaw("send-success-plural"), Map.of("players", "" + sendable.players().size(), "server", ((RegisteredServer) context.get("server")).getServerInfo().getName())));
+            context.getSender().sendMessage(
+                    MiniMessage.miniMessage().deserialize(
+                            plugin.sendSettings.getMessageRaw("send-success-plural"),
+                            Placeholder.parsed("players", String.valueOf(sendable.players().size())),
+                            Placeholder.parsed("server", ((RegisteredServer) context.get("server")).getServerInfo().getName())
+                    )
+            );
         }
     }
 
