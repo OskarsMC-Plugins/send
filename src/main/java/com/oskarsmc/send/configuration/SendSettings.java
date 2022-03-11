@@ -86,7 +86,7 @@ public final class SendSettings {
     }
 
     public Component getMessageParsed(String key) {
-        return MiniMessage.get().parse(this.messages.getString(key));
+        return MiniMessage.miniMessage().deserialize(this.messages.getString(key));
     }
 
     public String getMessageRaw(String key) {
