@@ -12,11 +12,12 @@ Permission: `osmc.send.send`
 
 <details>
 <summary>Sending large amounts of players</summary>
-`/send all factions --delay 100`
+<code>/send all factions --delay 100</code>
+
 Breakdown:
-- Send all players
-- To the factions server
-- Sending a player every 100ms (0.1s)
+* Send all players
+* To the factions server
+* Sending a player every 100ms (0.1s)
 </details>
 
 # Download
