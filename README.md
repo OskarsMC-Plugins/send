@@ -6,9 +6,18 @@ Plugin to send players to servers on Velocity.
 ## Commands
 
 ### Send:
-Permission: `osmc.send.send` 
+Permission: `osmc.send.send`
 
 <img src="docs/send.svg">
+
+<details>
+<summary>Sending large amounts of players</summary>
+`/send all factions --delay 100`
+Breakdown:
+- Send all players
+- To the factions server
+- Sending a player every 100ms (0.1s)
+</details>
 
 # Download
 Get the latest release <a href="https://github.com/OskarsMC-Plugins/send/releases">here</a>
