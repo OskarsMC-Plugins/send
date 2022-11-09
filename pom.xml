@@ -6,7 +6,7 @@
 
     <groupId>com.oskarsmc</groupId>
     <artifactId>send</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
 
     <name>send</name>
@@ -144,6 +144,10 @@
                             <pattern>org.bstats</pattern>
                             <shadedPattern>com.oskarsmc.send.relocated.bstats</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>cloud.commandframework</pattern>
+                            <shadedPattern>com.oskarsmc.send.relocated.cloud</shadedPattern>
+                        </relocation>
                     </relocations>
                 </configuration>
                 <executions>
@@ -170,8 +174,8 @@
 
     <repositories>
         <repository>
-            <id>velocitypowered-repo</id>
-            <url>https://repo.velocitypowered.com/releases/</url>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
         <repository>
             <id>minecraft-libraries</id>
@@ -187,36 +191,31 @@
         <dependency>
             <groupId>com.velocitypowered</groupId>
             <artifactId>velocity-api</artifactId>
-            <version>3.1.0</version>
+            <version>3.1.2-SNAPSHOT</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-text-minimessage</artifactId>
-            <version>4.1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.bstats</groupId>
             <artifactId>bstats-velocity</artifactId>
-            <version>2.2.1</version>
+            <version>3.0.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>cloud.commandframework</groupId>
             <artifactId>cloud-velocity</artifactId>
-            <version>1.6.1</version>
+            <version>1.7.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>net.luckperms</groupId>
             <artifactId>api</artifactId>
-            <version>5.3</version>
+            <version>5.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>22.0.0</version>
+            <version>23.0.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

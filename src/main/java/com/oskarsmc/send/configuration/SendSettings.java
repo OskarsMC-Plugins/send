@@ -1,9 +1,9 @@
 package com.oskarsmc.send.configuration;
 
+import com.google.inject.Inject;
 import com.moandjiezana.toml.Toml;
 import com.oskarsmc.send.util.VersionUtils;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -12,12 +12,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
+import java.nio.file.Path;
 import java.util.List;
 
 public final class SendSettings {
-    private final File dataFolder;
-    private final File file;
+    private final Path dataFolder;
+    private final Path configPath;
 
     private Boolean serverBlackListEnabled;
     private List<String> serversBlackListed;
@@ -27,11 +27,18 @@ public final class SendSettings {
     private final Double configVersion;
     private boolean enabled;
 
-    public SendSettings(File dataFolder, Logger logger) {
-        this.dataFolder = dataFolder;
-        this.file = new File(this.dataFolder, "config.toml");
+    @Inject
+    public SendSettings(@DataDirectory @NotNull Path dataDirectory, Logger logger) {
+        this.dataFolder = dataDirectory;
+        this.configPath = dataDirectory.resolve("config.toml");
 
-        saveDefaultConfig();
+        try {
+            saveDefaultConfig();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
         Toml toml = loadConfig();
 
         this.enabled = toml.getBoolean("plugin.enabled");
@@ -40,10 +47,10 @@ public final class SendSettings {
         this.configVersion = toml.getDouble("developer-info.config-version");
 
         if (!VersionUtils.isLatestConfigVersion(this)) {
-            logger.warn("Your Config is out of date (Latest: " + VersionUtils.CONFIG_VERSION + ", Config Version: " + this.getConfigVersion() + ")!");
+            logger.warn("Your Config is out of date (Latest: " + VersionUtils.CONFIG_VERSION + ", Config Version: " + this.configVersion() + ")!");
             logger.warn("Please backup your current config.toml, and delete the current one. A new config will then be created on the next proxy launch.");
             logger.warn("The plugin's functionality will not be enabled until the config is updated.");
-            this.setEnabled(false);
+            this.enabled(false);
             return;
         }
 
@@ -53,51 +60,46 @@ public final class SendSettings {
         this.serversBlackListed = toml.getList("servers.servers-blacklisted");
     }
 
-    private void saveDefaultConfig() {
-        if (!dataFolder.exists()) dataFolder.mkdir();
-        if (file.exists()) return;
+    private void saveDefaultConfig() throws IOException {
+        if (Files.notExists(dataFolder)) Files.createDirectory(dataFolder);
+        if (Files.exists(configPath)) return;
 
         try (InputStream in = SendSettings.class.getResourceAsStream("/config.toml")) {
-            Files.copy(in, file.toPath());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            assert in != null;
+            Files.copy(in, configPath);
         }
     }
 
     @Contract(" -> new")
-    private @NotNull File getConfigFile() {
-        return new File(dataFolder, "config.toml");
+    private @NotNull File configFile() {
+        return configPath.toFile();
     }
 
     private Toml loadConfig() {
-        return new Toml().read(getConfigFile());
+        return new Toml().read(configFile());
     }
 
-    public boolean isEnabled() {
+    public boolean enabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void enabled(boolean enabled) {
         this.enabled = enabled;
     }
 
-    public Double getConfigVersion() {
+    public Double configVersion() {
         return configVersion;
     }
 
-    public Component getMessageParsed(String key) {
-        return MiniMessage.get().parse(this.messages.getString(key));
-    }
-
-    public String getMessageRaw(String key) {
+    public String messageRaw(String key) {
         return this.messages.getString(key);
     }
 
-    public Boolean getServerBlackListEnabled() {
+    public Boolean serverBlackListEnabled() {
         return serverBlackListEnabled;
     }
 
-    public List<String> getServersBlackListed() {
+    public List<String> serversBlackListed() {
         return serversBlackListed;
     }
 }

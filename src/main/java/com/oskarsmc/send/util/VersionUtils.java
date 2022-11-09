@@ -8,10 +8,10 @@ public final class VersionUtils {
     public static final double CONFIG_VERSION = getDefaultConfiguration().getDouble("developer-info.config-version");
 
     public static boolean isLatestConfigVersion(@NotNull SendSettings sendSettings) {
-        if (sendSettings.getConfigVersion() == null) {
+        if (sendSettings.configVersion() == null) {
             return false;
         }
-        return sendSettings.getConfigVersion() == CONFIG_VERSION;
+        return sendSettings.configVersion() == CONFIG_VERSION;
     }
 
     public static Toml getDefaultConfiguration() {
